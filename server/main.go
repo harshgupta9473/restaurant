@@ -15,50 +15,63 @@ import (
 )
 
 func main() {
+	// Load environment variables
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error loading .env file: ", err)
 	}
-	log.Println("ENV LOADED")
+	log.Println("ENV loaded")
+
+	// Initialize database
 	err = db.InitDB()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error initializing database: ", err)
 	}
-	log.Println("db is initialiesd")
+	log.Println("Database initialized")
+
+	// Create tables
 	err = db.CreateAllTable()
 	if err != nil {
-		log.Fatal("Error creating tables %w", err)
+		log.Fatalf("Error creating tables: %v", err)
 	}
 	log.Println("Tables created")
 
+	// Load secrets
 	utils.LoadSecrets()
 
+	// Setup routes
 	router := routes.SetupRoutes()
 
+	// Configure HTTP server
 	s := &http.Server{
 		Addr:         ":3001",
 		Handler:      &router,
 		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
+	// Start server in a goroutine
 	go func() {
-		err := s.ListenAndServe()
-		if err != nil {
-			log.Fatal(err)
+		log.Println("Listening on port 3001")
+		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe error: %v", err)
 		}
 	}()
 
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, os.Kill)
+	// Graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, os.Kill)
 
 	sig := <-sigChan
-	log.Println("recieved terminate, graceful shutdown", sig)
+	log.Println("Received signal to terminate:", sig)
 
-	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	// Timeout context for shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	s.Shutdown(tc)
-
+	if err := s.Shutdown(ctx); err != nil {
+		log.Fatalf("Server Shutdown Failed: %v", err)
+	}
+	log.Println("Server exited properly")
 }

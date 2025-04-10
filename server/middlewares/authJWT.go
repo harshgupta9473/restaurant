@@ -61,7 +61,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		tokenStr := cookie.Value
-		claims,token,err := ValidateJWT(tokenStr,string(utils.AccessJWTSecret))
+		claims,token,err := ValidateJWT(tokenStr,utils.AccessJWTSecret)
 
 		if err == nil && token.Valid {
 			ctx := context.WithValue(r.Context(), "user", claims)
@@ -93,7 +93,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			newClaims ,rt,err:= ValidateJWT(refreshToken,string(utils.RefreshJWTSecret))
+			newClaims ,rt,err:= ValidateJWT(refreshToken,utils.RefreshJWTSecret)
 			if err != nil || !rt.Valid {
 				utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{
 					Status:  "error",
@@ -133,19 +133,19 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func ValidateJWT(tokenStr string,JWTSecret string)(*JWTClaims,*jwt.Token,error) {
+func ValidateJWT(tokenStr string,JWTSecret []byte)(JWTClaims,*jwt.Token,error) {
 	claims := &JWTClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 		return JWTSecret, nil
 	})
 	if err != nil {
-		return nil,nil, err
+		return *claims,nil, err
 	}
 
 	if !token.Valid {
-		return nil, nil,errors.New("invalid token")
+		return *claims, nil,errors.New("invalid token")
 	}
 
-	return claims,token, nil
+	return *claims,token, nil
 }

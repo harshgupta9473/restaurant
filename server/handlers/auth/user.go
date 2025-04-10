@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"net/http"
 	"strconv"
@@ -40,7 +41,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	if err != sql.ErrNoRows {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: "Internal Server Error",
+			Message: fmt.Sprintf("Internal Server Error : %w",err),
 			Error:   "DB_ERROR",
 		})
 		return
@@ -50,7 +51,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: "Internal Server Error",
+			Message: fmt.Sprintf("Internal Server Error : %w",err),
 			Error:   "ERR_OTP_GENERATE",
 		})
 		return
@@ -60,7 +61,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: "Internal Server Error",
+			Message: fmt.Sprintf("Internal Server Error : %w",err),
 			Error:   "PASSWORD_HASH_ERROR",
 		})
 		return
@@ -181,7 +182,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 	//if user is already logged in?
 	cookie, err := r.Cookie("access_token")
 	if err == nil {
-		claims, _, err := middlewares.ValidateJWT(cookie.Value, string(utils.AccessJWTSecret))
+		claims, _, err := middlewares.ValidateJWT(cookie.Value, utils.AccessJWTSecret)
 		if err == nil && claims.UserID == userId {
 			newAccessToken, newRefreshToken, err := middlewares.GenerateTokenForRole(claims.UserID, true)
 			if err == nil {
@@ -232,7 +233,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
 			Status:  "error",
 			Message: "Invalid Email Or Password",
-			Error:   "Not the Correct Format",
+			Error:   "Invalid_EMAIL_PASSWORD",
 		})
 		return
 	}

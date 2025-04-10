@@ -2,23 +2,67 @@ package db
 
 import (
 	"fmt"
+	"log"
 )
 
 func CreateAllTable() error {
 	err := CreateUserTable()
 	if err != nil {
-		return fmt.Errorf(" error creating user table created %w", err)
+		return fmt.Errorf("error creating user table: %w", err)
 	}
+	log.Println("user table created")
+
 	err = CreateOTPTable()
 	if err != nil {
-		return fmt.Errorf(" error creating otp table created %w", err)
+		return fmt.Errorf("error creating OTP table: %w", err)
 	}
+	log.Println("OTP table created")
+
 	err = CreateRestaurantReqTable()
 	if err != nil {
-		return fmt.Errorf("error creating restaurant table")
+		return fmt.Errorf("error creating restaurant request table: %w", err)
 	}
+	log.Println("restaurant request table created")
+
+	err = CreateSuperAdmin()
+	if err != nil {
+		return fmt.Errorf("error creating super admin table: %w", err)
+	}
+	log.Println("super admin table created")
+
+	err = CreateRestaurantsTable()
+	if err != nil {
+		return fmt.Errorf("error creating restaurants table: %w", err)
+	}
+	log.Println("restaurants table created")
+
+	err = CreateRestaurantDetailsTable()
+	if err != nil {
+		return fmt.Errorf("error creating restaurant details table: %w", err)
+	}
+	log.Println("restaurant details table created")
+
+	err = CreateRestaurantImagesTable()
+	if err != nil {
+		return fmt.Errorf("error creating restaurant images table: %w", err)
+	}
+	log.Println("restaurant images table created")
+
+	err = CreateRestaurantReviewsTable()
+	if err != nil {
+		return fmt.Errorf("error creating restaurant reviews table: %w", err)
+	}
+	log.Println("restaurant reviews table created")
+
+	err = CreateRestaurantTagsTable()
+	if err != nil {
+		return fmt.Errorf("error creating restaurant tags table: %w", err)
+	}
+	log.Println("restaurant tags table created")
+
 	return nil
 }
+
 
 
 func CreateUserTable() error {
@@ -39,7 +83,7 @@ func CreateUserTable() error {
 }
 
 func CreateSuperAdmin() error{
-	query:=`CREATE TABLE super_admins (
+	query:=`CREATE TABLE IF NOT EXISTS super_admins (
     id SERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -53,7 +97,7 @@ return err
 func CreateOTPTable() error {
 	query := `CREATE TABLE IF NOT EXISTS otp_table(
 	id SERIAL PRIMARY KEY,
-	user_id INTEGER NOT NULL,
+	user_id INTEGER NOT NULL UNIQUE,
 	token VARCHAR(30) NOT NULL,
 	expires_at TIMESTAMP NOT NULL,
 	verified BOOLEAN DEFAULT FALSE,

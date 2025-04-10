@@ -14,6 +14,7 @@ type User struct {
 	Verified   bool      `json:"verified"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	Blocked    bool      `json:"blocked"`
 }
 
 type UserSignup struct {
