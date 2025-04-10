@@ -99,6 +99,7 @@ func CreateRestaurantReqTable() error {
 func CreateRestaurantsTable() error {
 	query := `CREATE TABLE IF NOT EXISTS restaurants (
 		id SERIAL PRIMARY KEY,
+
 		owner_id INTEGER NOT NULL UNIQUE,
 		title VARCHAR(255) NOT NULL,
 		description TEXT,
@@ -174,3 +175,5 @@ func CreateRestaurantTagsTable() error {
 	_, err := DB.Exec(query)
 	return err
 }
+
+

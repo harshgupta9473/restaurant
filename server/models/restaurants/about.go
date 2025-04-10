@@ -55,6 +55,39 @@ type Restaurant struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+type RestaurantPublic struct {
+	ID            int64       `json:"id"`
+	OwnerID       int64       `json:"-"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	StreetAddress string    `json:"street_address"`
+	Locality      string    `json:"locality"`
+	City          string    `json:"city"`
+	State         string    `json:"state"`
+	PostalCode    string    `json:"postal_code"`
+	Country       string    `json:"country"`
+	Latitude      float64   `json:"latitude"`
+	Longitude     float64   `json:"longitude"`
+	FoodType      string    `json:"food_type"`
+	ContactNumber string    `json:"-"`
+	ContactEmail  string    `json:"-"`
+	GSTNumber     string    `json:"-"`
+	PANNumber     string    `json:"-"`
+	IsActive      bool      `json:"is_active"`
+	ImageURL     string    `json:"image_url"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type PublicRestaurantDetails struct {
+	Restaurant RestaurantPublic     `json:"restaurant"`
+	Details    RestaurantDetails    `json:"details"`
+	Review     int64  `json:"reviews"`
+	Tags       []RestaurantTag      `json:"tags"`
+}
+
+
+
 type RestaurantDetails struct {
 	ID            int64    `json:"id"`
 	RestaurantID  int64    `json:"restaurant_id"`
