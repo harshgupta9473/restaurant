@@ -103,3 +103,25 @@ func GetReview(restaurantId int64, page, limit int) ([]models.RestaurantReview, 
 
 	return reviews, nil
 }
+
+func AddReview(userId int64,restaurantId int64,text string,rating int)(*models.RestaurantReview,error){
+	conn:=db.GetDB()
+	query:=`Insert into restaurant_reviews
+	(restaurant_id,user_id,rating,review)
+	values($1,$2,$3,$4)
+	returning *
+	`
+	var res models.RestaurantReview
+    err:=conn.QueryRow(query,restaurantId,userId,rating,text).Scan(
+		&res.ID,
+		&res.RestaurantID,
+		&res.UserID,
+		&res.Rating,
+		&res.Review,
+		&res.CreatedAt,
+	)
+	if err!=nil{
+		return nil,err
+	}
+	return &res,nil
+}

@@ -63,8 +63,6 @@ func CreateAllTable() error {
 	return nil
 }
 
-
-
 func CreateUserTable() error {
 	query := `CREATE TABLE IF NOT EXISTS users(
 	id SERIAL PRIMARY KEY,
@@ -82,16 +80,16 @@ func CreateUserTable() error {
 	return err
 }
 
-func CreateSuperAdmin() error{
-	query:=`CREATE TABLE IF NOT EXISTS super_admins (
+func CreateSuperAdmin() error {
+	query := `CREATE TABLE IF NOT EXISTS super_admins (
     id SERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `
-_,err:=DB.Exec(query)
-return err
+	_, err := DB.Exec(query)
+	return err
 }
 
 func CreateOTPTable() error {
@@ -112,7 +110,7 @@ func CreateRestaurantReqTable() error {
 		id SERIAL PRIMARY KEY,
 		owner_id INTEGER NOT NULL UNIQUE,
 		title VARCHAR(255) NOT NULL,
-
+		description TEXT,
 		street_address VARCHAR(255),
 		locality VARCHAR(100),
 		city VARCHAR(100),
@@ -139,7 +137,6 @@ func CreateRestaurantReqTable() error {
 	return err
 }
 
-
 func CreateRestaurantsTable() error {
 	query := `CREATE TABLE IF NOT EXISTS restaurants (
 		id SERIAL PRIMARY KEY,
@@ -158,6 +155,7 @@ func CreateRestaurantsTable() error {
 		food_type VARCHAR(20) CHECK (food_type IN ('veg', 'non-veg', 'both')) NOT NULL,
 		contact_number VARCHAR(20),
 		contact_email VARCHAR(255),
+		image_url TEXT,
 		gst_number VARCHAR(30),
 		pan_number VARCHAR(20),
 		is_active BOOLEAN DEFAULT TRUE,
@@ -219,5 +217,3 @@ func CreateRestaurantTagsTable() error {
 	_, err := DB.Exec(query)
 	return err
 }
-
-

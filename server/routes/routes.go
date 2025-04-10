@@ -21,7 +21,7 @@ func SetupRoutes() mux.Router {
 	userAuth.Handle("/verify", middlewares.AuthMiddleware(http.HandlerFunc((auth.SendVerificationLink)))).Methods(http.MethodGet)
 
 	// resturant registration
-	register := router.PathPrefix("restaurant/register").Subrouter()
+	register := router.PathPrefix("/restaurant/register").Subrouter()
 	register.Handle("/", middlewares.AuthMiddleware(http.HandlerFunc(restaurants.RestaurantAccountRequest))).Methods(http.MethodPost)
 
 	//SuperAdmin
@@ -31,7 +31,7 @@ func SetupRoutes() mux.Router {
 	adminRouter.Handle("/approve-restaurant/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.ApproveRestaurantRequest)))).Methods(http.MethodGet)
 	adminRouter.Handle("/block/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.BlockRestaurantRequest)))).Methods(http.MethodGet)
 	adminRouter.Handle("/request-again/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.ReRequestRestaurantRequest)))).Methods(http.MethodGet)
-	adminRouter.Handle("/request-again/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.DeleteRestaurantRequest)))).Methods(http.MethodGet)
+	adminRouter.Handle("/delete/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.DeleteRestaurantRequest)))).Methods(http.MethodGet)
 
 	//
 

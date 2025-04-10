@@ -12,14 +12,16 @@ import (
 func CreateRestaurantRequest(req *models.RestaurantFormReq) (int64, error) {
 	db := db.GetDB()
 	query := `
-		INSERT INTO restaurants (
-			owner_id, title, street_address, locality, city, state,
+		INSERT INTO restaurantsreq (
+			owner_id, title, description, street_address, locality, city, state,
 			postal_code, country, latitude, longitude, food_type,
 			contact_number, contact_email, image_url,
+			gst_number, pan_number
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
 			$7, $8, $9, $10, $11,
-			$12, $13, $14
+			$12, $13, $14,
+			$15, $16,$17
 		)
 		RETURNING id
 	`
@@ -29,6 +31,7 @@ func CreateRestaurantRequest(req *models.RestaurantFormReq) (int64, error) {
 		query,
 		req.OwnerID,
 		req.Title,
+		req.Description,
 		req.StreetAddress,
 		req.Locality,
 		req.City,
@@ -41,12 +44,14 @@ func CreateRestaurantRequest(req *models.RestaurantFormReq) (int64, error) {
 		req.ContactNumber,
 		req.ContactEmail,
 		req.ImageURL,
+		req.GSTNumber,
+		req.PANNumber,
 	).Scan(&restaurantID)
 
 	return restaurantID, err
 }
 
-func BlockRestaurantRequest(restaurantID int64) (sql.Result,error) {
+func BlockRestaurantRequest(restaurantID int64) (sql.Result, error) {
 	db := db.GetDB()
 	query := `
 		UPDATE restaurantsreq
@@ -57,24 +62,24 @@ func BlockRestaurantRequest(restaurantID int64) (sql.Result,error) {
 	return res, err
 }
 
-func DeletePendingRestaurantRequest(restaurantID int64) (sql.Result,error) {
+func DeletePendingRestaurantRequest(restaurantID int64) (sql.Result, error) {
 	db := db.GetDB()
 	query := `
 		DELETE FROM restaurantsreq
 		WHERE id = $1 and status='pending'
 	`
 	res, err := db.Exec(query, restaurantID)
-	return res,err
+	return res, err
 }
 
-func DeleteBlockedRestaurantRequest(restaurantID int64) (sql.Result,error) {
+func DeleteBlockedRestaurantRequest(restaurantID int64) (sql.Result, error) {
 	db := db.GetDB()
 	query := `
 		DELETE FROM restaurantsreq
 		WHERE id = $1 and status='block'
 	`
 	res, err := db.Exec(query, restaurantID)
-	return res,err
+	return res, err
 }
 
 func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
@@ -87,7 +92,7 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 
 	var req models.RestaurantFormReq
 	fetchQuery := `
-		SELECT id, owner_id, title, street_address, locality, city, state,
+		SELECT id, owner_id, title,description, street_address, locality, city, state,
 		       postal_code, country, latitude, longitude, food_type,
 		       contact_number, contact_email, image_url, gst_number, pan_number
 		FROM restaurantsreq
@@ -97,6 +102,7 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 		&req.ID,
 		&req.OwnerID,
 		&req.Title,
+		&req.Description,
 		&req.StreetAddress,
 		&req.Locality,
 		&req.City,
@@ -118,7 +124,6 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 		return nil, fmt.Errorf("failed to fetch request: %v", err)
 	}
 
-
 	approveQuery := `
 		UPDATE restaurantsreq
 		SET status = 'approve', updated_at = CURRENT_TIMESTAMP
@@ -130,16 +135,15 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 		return nil, err
 	}
 
-	
 	insertQuery := `
 		INSERT INTO restaurants (
-			owner_id, title, street_address, locality, city, state,
+			owner_id, title,description, street_address, locality, city, state,
 			postal_code, country, latitude, longitude, food_type,
 			contact_number, contact_email, image_url, gst_number, pan_number
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
 			$7, $8, $9, $10, $11,
-			$12, $13, $14, $15, $16
+			$12, $13, $14, $15, $16,$17
 		)
 		RETURNING id
 	`
@@ -149,6 +153,7 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 		insertQuery,
 		req.OwnerID,
 		req.Title,
+		req.Description,
 		req.StreetAddress,
 		req.Locality,
 		req.City,
@@ -178,6 +183,7 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 		ID:            restaurantID,
 		OwnerID:       req.OwnerID,
 		Title:         req.Title,
+		Description:   req.Description,
 		StreetAddress: req.StreetAddress,
 		Locality:      req.Locality,
 		City:          req.City,
@@ -199,3 +205,47 @@ func ApproveAndCreateRestaurant(requestID int64) (*models.Restaurant, error) {
 
 	return restaurant, nil
 }
+
+func GetAllListOFRestaurantRequests() ([]models.RestaurantFormReq, error) {
+	conn := db.GetDB()
+	query := `Select * from restaurantreq`
+	rows, err := conn.Query(query)
+	defer rows.Close()
+	if err != nil {
+		return nil,err
+	}
+	var res []models.RestaurantFormReq
+	for rows.Next() {
+		var req models.RestaurantFormReq
+		err = rows.Scan(
+			&req.ID,
+			&req.OwnerID,
+			&req.Title,
+			&req.Description,
+			&req.StreetAddress,
+			&req.Locality,
+			&req.City,
+			&req.State,
+			&req.PostalCode,
+			&req.Country,
+			&req.Latitude,
+			&req.Longitude,
+			&req.FoodType,
+			&req.ContactNumber,
+			&req.ContactEmail,
+			&req.ImageURL,
+			&req.GSTNumber,
+			&req.PANNumber,
+			&req.Status,
+			&req.IsActive,
+			&req.CreatedAt,
+			&req.UpdatedAt,
+		)
+		if err != nil && err != sql.ErrNoRows {
+			return res, err
+		}
+		res = append(res, req)
+	}
+	return res, nil
+}
+
