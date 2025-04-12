@@ -116,3 +116,11 @@ type RestaurantTag struct {
 	RestaurantID int64  `json:"restaurant_id"`
 	Tag          string `json:"tag"`
 }
+
+type PrivateRestaurantDetails struct{
+	Restaurant Restaurant
+	Details RestaurantDetails
+	Images []RestaurantImage
+	Review int64
+	Tags []RestaurantTag
+}
