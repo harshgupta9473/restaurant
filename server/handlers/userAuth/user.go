@@ -41,7 +41,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	if err != sql.ErrNoRows {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: fmt.Sprintf("Internal Server Error : %w",err),
+			Message: fmt.Sprintf("Internal Server Error : %w", err),
 			Error:   "DB_ERROR",
 		})
 		return
@@ -51,7 +51,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: fmt.Sprintf("Internal Server Error : %w",err),
+			Message: fmt.Sprintf("Internal Server Error : %w", err),
 			Error:   "ERR_OTP_GENERATE",
 		})
 		return
@@ -61,7 +61,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: fmt.Sprintf("Internal Server Error : %w",err),
+			Message: fmt.Sprintf("Internal Server Error : %w", err),
 			Error:   "PASSWORD_HASH_ERROR",
 		})
 		return
@@ -184,7 +184,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		claims, _, err := middlewares.ValidateJWT(cookie.Value, utils.AccessJWTSecret)
 		if err == nil && claims.UserID == userId {
-			newAccessToken, newRefreshToken, err := middlewares.GenerateTokenForRole(claims.UserID, true)
+			newAccessToken, newRefreshToken, err := middlewares.GenerateTokenForRole(claims.UserID, true, claims.Role)
 			if err == nil {
 				// set access token in cookie
 				utils.SetCookie(w, "access_token", newAccessToken, 24*3600)
@@ -200,7 +200,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
+func UserLogin(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginReq
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -212,33 +212,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := helpers.GetUserByEmail(req.Email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
-				Status:  "error",
-				Message: "Invalid Request",
-				Error:   "Invalid Email or Password",
-			})
-		} else {
-			utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
-				Status:  "error",
-				Message: "Internal Server Error",
-				Error:   "DB_ERROR",
-			})
-		}
-		return
-	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
-			Status:  "error",
-			Message: "Invalid Email Or Password",
-			Error:   "Invalid_EMAIL_PASSWORD",
-		})
+	user,yes:=LoginHelper(w,r,req.Email,req.Password,"user")
+	if !yes{
 		return
 	}
 
-	accessToken, refreshToken, err := middlewares.GenerateTokenForRole(user.Id, user.Verified)
+
+	accessToken, refreshToken, err := middlewares.GenerateTokenForRole(user.Id, user.Verified, "user")
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
@@ -261,8 +241,37 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func LoginHelper(w http.ResponseWriter, r *http.Request, email, password, role string) (*models.User,bool) {
+	user, err := helpers.GetUserByEmail(email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
+				Status:  "error",
+				Message: "Invalid Request",
+				Error:   "Invalid Email or Password",
+			})
+		} else {
+			utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
+				Status:  "error",
+				Message: "Internal Server Error",
+				Error:   "DB_ERROR",
+			})
+		}
+		return nil, false
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
+			Status:  "error",
+			Message: "Invalid Email Or Password",
+			Error:   "Invalid_EMAIL_PASSWORD",
+		})
+		return nil, false
+	}
+	return user,true	
+}
+
 func SendVerificationLink(w http.ResponseWriter, r *http.Request) {
-	
+
 	claims, ok := r.Context().Value("user").(middlewares.JWTClaims)
 	if !ok {
 		utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{
@@ -272,7 +281,6 @@ func SendVerificationLink(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
 
 	if claims.Verified {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
@@ -285,7 +293,6 @@ func SendVerificationLink(w http.ResponseWriter, r *http.Request) {
 
 	userID := claims.UserID
 
-	
 	user, err := helpers.GetUserByUserId(userID)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
@@ -306,7 +313,6 @@ func SendVerificationLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	err = helpers.InsertTokenIntoOTPTable(token, userID)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
@@ -317,7 +323,6 @@ func SendVerificationLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	err = utils.SendVerificationEmail(user.Email, token, userID)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{

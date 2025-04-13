@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+
 type RestaurantFormReq struct {
 	ID          int64  `json:"id"`
 	OwnerID     int64  `json:"owner_id"`

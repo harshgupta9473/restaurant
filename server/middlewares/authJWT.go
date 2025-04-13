@@ -13,12 +13,13 @@ import (
 type JWTClaims struct {
 	UserID   int64  `json:"user_id"`
 	Verified bool   `json:"verified"`
+	Role     string  `json:"role"`
 	jwt.RegisteredClaims
 }
 
 
 
-func GenerateTokenForRole(userID int64, verified bool) (string, string, error) {
+func GenerateTokenForRole(userID int64, verified bool,role string) (string, string, error) {
 	accessClaims := JWTClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -38,6 +39,7 @@ func GenerateTokenForRole(userID int64, verified bool) (string, string, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 		},
 		Verified: verified,
+		Role: role,
 	}
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshToken, err := rt.SignedString(utils.RefreshJWTSecret)
@@ -104,7 +106,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			}
 
 			// Generate new tokens
-			newAccessToken, newRefreshToken, err := GenerateTokenForRole(newClaims.UserID, newClaims.Verified)
+			newAccessToken, newRefreshToken, err := GenerateTokenForRole(newClaims.UserID, newClaims.Verified,newClaims.Role)
 			if err != nil {
 				utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 					Status:  "error",

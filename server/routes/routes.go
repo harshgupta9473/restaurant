@@ -4,8 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/harshgupta9473/restaurantmanagement/handlers/auth"
+	"github.com/harshgupta9473/restaurantmanagement/handlers/userAuth"
 	restaurants "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/Registration"
+	 details "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/RestaurantDetails"
 	admin "github.com/harshgupta9473/restaurantmanagement/handlers/superAdmin"
 	"github.com/harshgupta9473/restaurantmanagement/middlewares"
 )
@@ -16,7 +17,7 @@ func SetupRoutes() mux.Router {
 	//user auth
 	userAuth := router.PathPrefix("/auth/user").Subrouter()
 	userAuth.HandleFunc("/signup", auth.Signup).Methods(http.MethodPost)
-	userAuth.HandleFunc("/login", auth.Login).Methods(http.MethodPost)
+	userAuth.HandleFunc("/login", auth.UserLogin).Methods(http.MethodPost)
 	userAuth.HandleFunc("/verify", auth.Verify).Methods(http.MethodPost)
 	userAuth.Handle("/verify", middlewares.AuthMiddleware(http.HandlerFunc((auth.SendVerificationLink)))).Methods(http.MethodGet)
 
@@ -34,7 +35,18 @@ func SetupRoutes() mux.Router {
 	adminRouter.Handle("/delete/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.DeleteRestaurantRequest)))).Methods(http.MethodGet)
 
 	
-	//
+	// public
+	   
+	   // restaurant details
+	   detailsRouter:=router.PathPrefix("/restaurant").Subrouter();
+	   detailsRouter.HandleFunc("/about/{id}",details.AboutRestaurant).Methods(http.MethodGet)
+	//  /about/reviews/12?page=2&limit=5
+	   detailsRouter.HandleFunc("/about/reviews/{id}",details.GetReview).Methods(http.MethodGet)
+
+
+
+	   
+
 
 	return *router
 }

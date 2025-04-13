@@ -3,7 +3,7 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/harshgupta9473/restaurantmanagement/db"
+	middlewares "github.com/harshgupta9473/restaurantmanagement/helpers/middleware"
 )
 
 func IsVerified(next http.Handler) http.Handler {
@@ -19,22 +19,17 @@ func IsVerified(next http.Handler) http.Handler {
 			http.Error(w, "Invalid user claims format", http.StatusUnauthorized)
 			return
 		}
+		if claims.Verified{
+			next.ServeHTTP(w,r)
+		}
 
 		userID := claims.UserID
 
-		db := db.GetDB()
-		var verified bool
-		err := db.QueryRow(`SELECT verified FROM users WHERE id=$1`, userID).Scan(&verified)
+		err := middlewares.IsVerified(userID)
 		if err != nil {
-			http.Error(w, "Failed to fetch user verification status", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		if !verified {
-			http.Error(w, "Please verify your account to proceed", http.StatusForbidden)
-			return
-		}
-
 		next.ServeHTTP(w, r)
 	})
 }
