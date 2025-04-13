@@ -15,5 +15,7 @@ func LoadSecrets() {
 }
 
 var (
-	AllowedRoles=[]string{"user","admin","owner","waiter","inventory","staff"}
+	AllowedRolesForAll=[]string{"user","admin","owner","waiter","inventory","staff"}
+	AllowedRolesForAboutRestaurantDetails=[]string{"admin","owner"}
 )
+

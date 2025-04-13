@@ -35,11 +35,17 @@ func SetupRoutes() mux.Router {
 	adminRouter.Handle("/delete/{id}", middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.DeleteRestaurantRequest)))).Methods(http.MethodGet)
 
 	
-	// public
 	   
-	   // restaurant details
-	   detailsRouter:=router.PathPrefix("/restaurant").Subrouter();
-	   detailsRouter.HandleFunc("/about/{id}",details.AboutRestaurant).Methods(http.MethodGet)
+	// restaurant details
+
+	//public
+	detailsRouter:=router.PathPrefix("/restaurant").Subrouter();
+	detailsRouter.HandleFunc("/about/{id}",details.AboutRestaurant).Methods(http.MethodGet)
+
+	// owner and admin
+	detailsRouter.Handle("/about/{id}",middlewares.AuthMiddleware(middlewares.IsAllowedRolesForAboutRestaurantDetail(http.HandlerFunc(details.GetRestaurantsPrivateDetails))))
+
+
 	//  /about/reviews/12?page=2&limit=5
 	   detailsRouter.HandleFunc("/about/reviews/{id}",details.GetReview).Methods(http.MethodGet)
 

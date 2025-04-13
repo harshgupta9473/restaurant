@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -13,19 +14,18 @@ import (
 type JWTClaims struct {
 	UserID   int64  `json:"user_id"`
 	Verified bool   `json:"verified"`
-	Role     string  `json:"role"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-
-
-func GenerateTokenForRole(userID int64, verified bool,role string) (string, string, error) {
+func GenerateTokenForRole(userID int64, verified bool, role string) (string, string, error) {
 	accessClaims := JWTClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 		},
 		Verified: verified,
+		Role:     role,
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessToken, err := at.SignedString(utils.AccessJWTSecret)
@@ -39,7 +39,7 @@ func GenerateTokenForRole(userID int64, verified bool,role string) (string, stri
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 		},
 		Verified: verified,
-		Role: role,
+		Role:     role,
 	}
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshToken, err := rt.SignedString(utils.RefreshJWTSecret)
@@ -63,9 +63,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		tokenStr := cookie.Value
-		claims,token,err := ValidateJWT(tokenStr,utils.AccessJWTSecret)
+		claims, token, err := ValidateJWT(tokenStr, utils.AccessJWTSecret)
 
-		if err == nil && token.Valid {
+		if err == nil && token.Valid && CheckAllowedRoles(claims.Role, utils.AllowedRolesForAll) {
 			ctx := context.WithValue(r.Context(), "user", claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
@@ -95,8 +95,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			newClaims ,rt,err:= ValidateJWT(refreshToken,utils.RefreshJWTSecret)
-			if err != nil || !rt.Valid {
+			newClaims, rt, err := ValidateJWT(refreshToken, utils.RefreshJWTSecret)
+			if err != nil || !rt.Valid || !CheckAllowedRoles(newClaims.Role, utils.AllowedRolesForAll) {
 				utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{
 					Status:  "error",
 					Message: "Invalid refresh token",
@@ -104,9 +104,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				})
 				return
 			}
-
 			// Generate new tokens
-			newAccessToken, newRefreshToken, err := GenerateTokenForRole(newClaims.UserID, newClaims.Verified,newClaims.Role)
+			newAccessToken, newRefreshToken, err := GenerateTokenForRole(newClaims.UserID, newClaims.Verified, newClaims.Role)
 			if err != nil {
 				utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 					Status:  "error",
@@ -135,19 +134,36 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func ValidateJWT(tokenStr string,JWTSecret []byte)(JWTClaims,*jwt.Token,error) {
+func ValidateJWT(tokenStr string, JWTSecret []byte) (JWTClaims, *jwt.Token, error) {
 	claims := &JWTClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 		return JWTSecret, nil
 	})
 	if err != nil {
-		return *claims,nil, err
+		return *claims, nil, err
 	}
 
 	if !token.Valid {
-		return *claims, nil,errors.New("invalid token")
+		return *claims, nil, errors.New("invalid token")
 	}
 
-	return *claims,token, nil
+	return *claims, token, nil
+}
+
+func GetUserContext(r *http.Request) (*JWTClaims, error) {
+	user, ok := r.Context().Value("user").(JWTClaims)
+	if !ok {
+		return nil, fmt.Errorf("failed to access user claims from context")
+	}
+	return &user, nil
+}
+
+func CheckAllowedRoles(userRole string, allowedroles []string) bool {
+	for _, role := range allowedroles {
+		if role == userRole {
+			return true
+		}
+	}
+	return false
 }

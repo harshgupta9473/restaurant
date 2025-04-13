@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	helpers "github.com/harshgupta9473/restaurantmanagement/helpers/auth"
-	middlewaresHelper "github.com/harshgupta9473/restaurantmanagement/helpers/middleware"
+	adminHelper "github.com/harshgupta9473/restaurantmanagement/helpers/superAdmin"
 	"github.com/harshgupta9473/restaurantmanagement/middlewares"
 	commonModels "github.com/harshgupta9473/restaurantmanagement/models/common"
 	models "github.com/harshgupta9473/restaurantmanagement/models/user"
@@ -73,7 +73,7 @@ func SuperAdminLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	
-	yes, err = middlewaresHelper.IsSuperAdmin(user.Id)
+	yes, err = adminHelper.IsSuperAdmin(user.Id)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
