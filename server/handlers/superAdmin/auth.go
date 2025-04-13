@@ -1,4 +1,4 @@
-package restaurants
+package admin
 
 import (
 	"database/sql"
@@ -8,7 +8,6 @@ import (
 	helpers "github.com/harshgupta9473/restaurantmanagement/helpers/auth"
 	middlewaresHelper "github.com/harshgupta9473/restaurantmanagement/helpers/middleware"
 	"github.com/harshgupta9473/restaurantmanagement/middlewares"
-
 	commonModels "github.com/harshgupta9473/restaurantmanagement/models/common"
 	models "github.com/harshgupta9473/restaurantmanagement/models/user"
 	"github.com/harshgupta9473/restaurantmanagement/utils"
@@ -44,9 +43,7 @@ func LoginHelper(w http.ResponseWriter, r *http.Request, email, password string)
 	return user, true
 }
 
-
-
-func RestaurantOwnerLogIN(w http.ResponseWriter, r *http.Request) {
+func SuperAdminLogin(w http.ResponseWriter, r *http.Request) {
 	var req commonModels.RoleLoginReq
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -60,46 +57,45 @@ func RestaurantOwnerLogIN(w http.ResponseWriter, r *http.Request) {
 	}
 
 	
-	if req.Role != "owner" {
+	if req.Role != "admin" {
 		utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{
 			Status:  "error",
 			Message: "Invalid role provided",
-			Error:   "Access restricted to restaurant owners only",
+			Error:   "Access restricted to admins only",
 		})
 		return
 	}
 
-	
+
 	user, yes := LoginHelper(w, r, req.Email, req.Password)
 	if !yes {
 		return 
 	}
 
-
-	exists, err := middlewaresHelper.IsRestaurantOwner(user.Id)
+	
+	yes, err = middlewaresHelper.IsSuperAdmin(user.Id)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: "Could not verify restaurant ownership",
+			Message: "Failed to verify super admin status",
 			Error:   err.Error(),
 		})
 		return
 	}
-	if !exists {
+	if !yes {
 		utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
 			Status:  "error",
-			Message: "You are not registered as a restaurant owner",
-			Error:   "Unauthorized",
+			Message: "You are not authorized as a super admin",
+			Error:   "Unauthorized access",
 		})
 		return
 	}
 
-	
 	accessToken, refreshToken, err := middlewares.GenerateTokenForRole(user.Id, user.Verified, req.Role)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
-			Message: "Could not generate token",
+			Message: "Could not generate tokens",
 			Error:   err.Error(),
 		})
 		return
@@ -109,13 +105,9 @@ func RestaurantOwnerLogIN(w http.ResponseWriter, r *http.Request) {
 	utils.SetCookie(w, "access_token", accessToken, 24*3600)
 	utils.SetCookie(w, "refresh_token", refreshToken, 7*24*3600)
 
+	
 	utils.WriteJson(w, http.StatusOK, utils.APIResponse{
 		Status:  "success",
-		Message: "Login successful",
+		Message: "Super Admin login successful",
 	})
 }
-
-
-
-
-
