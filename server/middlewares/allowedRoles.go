@@ -18,14 +18,6 @@ func IsAllowedRolesForAboutRestaurantDetail(next http.Handler) http.Handler {
 			return
 		}
 
-		if claim.Role == "" {
-			utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
-				Status:  "error",
-				Message: "Forbidden: Role not found in token",
-				Error:   "NO_ROLE",
-			})
-			return
-		}
 
 		if !CheckAllowedRoles(claim.Role, utils.AllowedRolesForAboutRestaurantDetails) {
 			utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{

@@ -1,4 +1,4 @@
-package restaurants
+package restaurantsAuth
 
 import (
 	"database/sql"

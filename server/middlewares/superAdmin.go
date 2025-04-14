@@ -6,25 +6,26 @@ import (
 	"github.com/harshgupta9473/restaurantmanagement/utils"
 )
 
-func IsSuperAdminMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, ok := r.Context().Value("user").(JWTClaims)
-		if !ok {
-			utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
+func IsSuperAdminMiddleware(next http.Handler)http.Handler{
+	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
+		claim,err:=GetUserContext(r)
+		if err!=nil{
+			utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{
 				Status:  "error",
-				Message: "Invalid user context",
+				Message: "Unauthorized: User context not found",
+				Error:   "NO_USER_CONTEXT",
 			})
 			return
 		}
-
-		if user.Role!="admin" {
+		if claim.Role!="admin"{
 			utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
 				Status:  "error",
-				Message: "Access denied: Not a super admin",
+				Message: "Forbidden: Role not permitted for this route",
+				Error:   "ROLE_NOT_ALLOWED",
 			})
 			return
 		}
-
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w,r)
 	})
 }
+

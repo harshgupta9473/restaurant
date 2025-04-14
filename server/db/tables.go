@@ -60,6 +60,12 @@ func CreateAllTable() error {
 	}
 	log.Println("restaurant tags table created")
 
+	err=CreateRestaurantStaffTable()
+	if err!=nil{
+		return fmt.Errorf("error creating restaurant staff table: %v",err)
+	}
+	log.Println("restaurant staff table created")
+
 	return nil
 }
 
@@ -213,6 +219,23 @@ func CreateRestaurantTagsTable() error {
 		restaurant_id INTEGER NOT NULL,
 		tag VARCHAR(50) NOT NULL,
 		FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+	)`
+	_, err := DB.Exec(query)
+	return err
+}
+
+func CreateRestaurantStaffTable() error {
+	query := `CREATE TABLE IF NOT EXISTS restaurant_staff (
+		id SERIAL PRIMARY KEY,
+		restaurant_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
+		role TEXT,
+		permission TEXT[],
+		is_approved BOOLEAN DEFAULT FALSE,
+		created_at TIMESTAMP DEFAULT NOW(),
+		updated_at TIMESTAMP DEFAULT NOW(),
+		FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
+		FOREIGN KEY (user_id) REFERENCES users(id)
 	)`
 	_, err := DB.Exec(query)
 	return err

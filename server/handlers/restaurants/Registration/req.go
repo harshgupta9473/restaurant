@@ -51,20 +51,3 @@ func RestaurantAccountRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func GetAllListOFRequest(w http.ResponseWriter, r *http.Request) {
-	result, err := restaurants.GetAllListOFRestaurantRequests()
-	if err != nil {
-		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
-			Status:  "error",
-			Message: "Failed to fetch restaurant requests",
-			Error:   err.Error(),
-		})
-		return
-	}
-
-	utils.WriteJson(w, http.StatusOK, utils.APIResponse{
-		Status:  "success",
-		Message: "Fetched successfully",
-		Data:    result,
-	})
-}
