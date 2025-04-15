@@ -2,7 +2,6 @@ package models
 
 import "time"
 
-
 type RestaurantFormReq struct {
 	ID          int64  `json:"id"`
 	OwnerID     int64  `json:"owner_id"`
@@ -118,10 +117,40 @@ type RestaurantTag struct {
 	Tag          string `json:"tag"`
 }
 
-type PrivateRestaurantDetails struct{
+type PrivateRestaurantDetails struct {
 	Restaurant Restaurant
-	Details RestaurantDetails
-	Images []RestaurantImage
-	Review int64
-	Tags []RestaurantTag
+	Details    RestaurantDetails
+	Images     []RestaurantImage
+	Review     int64
+	Tags       []RestaurantTag
+}
+
+type MenuCategory struct {
+	ID           int64     `json:"id"`
+	Name         string    `json:"name"`
+	RestaurantId *int64    `json:"restaurant_id,omitempty"`
+	IsCustom     bool      `json:"is_custom"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type MenuItem struct {
+	ID           int64     `json:"id"`
+	RestaurantId int64     `json:"restaurant_id"`
+	CategoryId   int64     `json:"category_id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	Price        float64   `json:"price"`
+	Cuisine      string    `json:"cuisine"`
+	ImageURL     string    `json:"image_url"`
+	IsAvailable  bool      `json:"is_available"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+
+
+type MenuItemsWithCategory struct{
+	MenuCategory MenuCategory 
+	MenuItems []MenuItem
 }
