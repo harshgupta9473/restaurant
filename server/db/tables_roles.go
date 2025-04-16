@@ -79,5 +79,3 @@ func CreateStaffRoles()error{
    _,err:=DB.Exec(query)
    return err
 }
-
-

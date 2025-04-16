@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/harshgupta9473/restaurantmanagement/db"
+	"github.com/harshgupta9473/restaurantmanagement/db/seed"
 	"github.com/harshgupta9473/restaurantmanagement/routes"
 	"github.com/harshgupta9473/restaurantmanagement/utils"
 	"github.com/joho/godotenv"
@@ -38,6 +39,11 @@ func main() {
 
 	// Load secrets
 	utils.LoadSecrets()
+
+	err=seed.Seed()
+	if err!=nil{
+		log.Fatalf("Error seeding the tables")
+	}
 
 	// Setup routes
 	router := routes.SetupRoutes()
