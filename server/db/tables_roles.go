@@ -8,6 +8,7 @@ package db
 func CreateRolesTable()error{
 	query:=`CREATE TABLE IF NOT EXISTS roles(
 	id SERIAL PRIMARY KEY,
+    code VARCHAR(20),
 	name VARCHAR(100) NOT NULL,
 	description TEXT,
 	restaurant_id INTEGER,
@@ -74,7 +75,7 @@ func CreateStaffRoles()error{
     role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, restaurant_id)
+    UNIQUE(user_id, restaurant_id,role_id)
    )`
    _,err:=DB.Exec(query)
    return err

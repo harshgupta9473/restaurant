@@ -2,7 +2,7 @@ package roleModels
 
 import "time"
 
-type RoleReq struct {
+type NewRole struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
 	RestaurantId int64  `json:"restaurant_id"`
@@ -12,6 +12,7 @@ type RoleReq struct {
 type Roles struct {
 	ID           int64     `json:"id"`
 	Name         string    `json:"name"`
+	Code         string    `json:"-"`
 	Description  string    `json:"description"`
 	RestaurantId int64     `json:"restaurant_id"`
 	Level        int64     `json:"level"`
@@ -19,4 +20,10 @@ type Roles struct {
 	Is_Custom    bool      `json:"is_custom"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type NewUserRequestForRole struct {
+	RestaurantID int64  `json:"restaurant_id"`
+	Code         string `json:"code"`
+	RoleId       int64  `json:"role_id"`
 }
