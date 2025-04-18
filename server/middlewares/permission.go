@@ -49,6 +49,10 @@ func RequireAuthority(permission string, AuthorityPermissionCheck func(userId,re
 			}
 
 			roleID, err := strconv.ParseInt(r.URL.Query().Get("roleID"), 10, 64)
+			if err!=nil{
+				//
+				return
+			}
 
 			if !AuthorityPermissionCheck(user.UserID,user.RestaurantId,roleID,permission) {
 				utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
