@@ -58,65 +58,66 @@ func RequestRole(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		UserID       int64 `json:"user_id"`
-		RestaurantID int64 `json:"restaurant_id"`
-		RoleID       int64 `json:"role_id"`
-		Approve      bool  `json:"approve"`
-	}
 
-	// Decode request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
-			Status:  "error",
-			Message: "Invalid request data",
-			Error:   "INVALID_REQUEST_DATA",
-		})
-		return
-	}
-	user,err:=middlewares.GetRestaurantUserContext(r)
-	if err!=nil{
-		//
-		return
-	}
-	// 🔐 Extract acting user from context (set by JWT middleware)
-	actingUserID := user.UserID
-	actingRoleID := user.RoleId
+// func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
+// 	var req struct {
+// 		UserID       int64 `json:"user_id"`
+// 		RestaurantID int64 `json:"restaurant_id"`
+// 		RoleID       int64 `json:"role_id"`
+// 		Approve      bool  `json:"approve"`
+// 	}
 
-	// ✅ 1. Check if acting user is Owner or has permission to approve roles for target role
-	hasPermission, err := database.HasApprovePermission(actingRoleID, req.RoleID)
-	if err != nil {
-		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
-			Status:  "error",
-			Message: "Authorization check failed",
-			Error:   "AUTH_CHECK_FAILED",
-		})
-		return
-	}
+// 	// Decode request
+// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+// 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "Invalid request data",
+// 			Error:   "INVALID_REQUEST_DATA",
+// 		})
+// 		return
+// 	}
+// 	user,err:=middlewares.GetRestaurantUserContext(r)
+// 	if err!=nil{
+// 		//
+// 		return
+// 	}
+// 	// 🔐 Extract acting user from context (set by JWT middleware)
+// 	actingUserID := user.UserID
 
-	if !hasPermission {
-		utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
-			Status:  "error",
-			Message: "You are not authorized to approve this role",
-			Error:   "NOT_AUTHORIZED",
-		})
-		return
-	}
 
-	// ✅ 2. Proceed with approval/rejection
-	err = database.UpdateRoleApproval(req.UserID, req.RestaurantID, req.RoleID, req.Approve)
-	if err != nil {
-		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
-			Status:  "error",
-			Message: "Failed to approve/reject role",
-			Error:   "APPROVAL_FAILED",
-		})
-		return
-	}
+// 	// ✅ 1. Check if acting user is Owner or has permission to approve roles for target role 
+// 	hasPermission, err := database.HasApprovePermission(actingRoleID, req.RoleID)
+// 	if err != nil {
+// 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "Authorization check failed",
+// 			Error:   "AUTH_CHECK_FAILED",
+// 		})
+// 		return
+// 	}
 
-	utils.WriteJson(w, http.StatusOK, utils.APIResponse{
-		Status:  "success",
-		Message: "Role request approved/rejected",
-	})
-}
+// 	if !hasPermission {
+// 		utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "You are not authorized to approve this role",
+// 			Error:   "NOT_AUTHORIZED",
+// 		})
+// 		return
+// 	}
+
+// 	// ✅ 2. Proceed with approval/rejection
+// 	err = database.UpdateRoleApproval(req.UserID, req.RestaurantID, req.RoleID, req.Approve)
+// 	if err != nil {
+// 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "Failed to approve/reject role",
+// 			Error:   "APPROVAL_FAILED",
+// 		})
+// 		return
+// 	}
+
+// 	utils.WriteJson(w, http.StatusOK, utils.APIResponse{
+// 		Status:  "success",
+// 		Message: "Role request approved/rejected",
+// 	})
+// }

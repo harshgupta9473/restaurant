@@ -12,19 +12,15 @@ import (
 )
 
 type JWTRestaurantClaims struct {
-	UserID      int64    `json:"user_id"`
-	RoleId        int64  `json:"role_id"`
-	Role string   `json:"role"`
-	Permissions []string `json:"permissions"`
+	UserID       int64 `json:"user_id"`
+	RestaurantId int64 `json:"restaurant_id"`
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userID int64, roleID int64,role string, permissions []string) (string, error) {
+func GenerateAccessToken(userID int64, restaurantId int64) (string, error) {
 	claims := JWTRestaurantClaims{
-		UserID:      userID,
-		RoleId:        roleID,
-		Role:  role,
-		Permissions: permissions,
+		UserID:       userID,
+		RestaurantId: restaurantId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -33,14 +29,13 @@ func GenerateAccessToken(userID int64, roleID int64,role string, permissions []s
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(utils.AccessRestaurantRoleJWTSecret)
 }
-func GenerateRefreshToken(userID int64, verified bool,  roleID int64,role string, permissions []string) (string, error) {
+
+func GenerateRefreshToken(userID int64, restaurantId int64) (string, error) {
 	claims := JWTRestaurantClaims{
-		UserID:      userID,
-		RoleId:        roleID,
-		Role: role,
-		Permissions: permissions,
+		UserID:       userID,
+		RestaurantId: restaurantId,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
@@ -63,7 +58,6 @@ func AuthRestaurantRoleMiddleware(next http.Handler) http.Handler {
 		accessToken := cookie.Value
 		claims, token, err := ValidateRestaurantRolesJWT(accessToken, utils.AccessRestaurantRoleJWTSecret)
 
-		
 		if err == nil && token.Valid {
 			ctx := context.WithValue(r.Context(), "restaurant_user", claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -93,7 +87,7 @@ func AuthRestaurantRoleMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			newAccess, err := GenerateAccessToken(refreshClaims.UserID, refreshClaims.RoleId,refreshClaims.Role, refreshClaims.Permissions)
+			newAccess, err := GenerateAccessToken(refreshClaims.UserID, refreshClaims.RestaurantId)
 			if err != nil {
 				utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 					Status:  "error",
@@ -102,7 +96,7 @@ func AuthRestaurantRoleMiddleware(next http.Handler) http.Handler {
 				})
 				return
 			}
-			newRefresh, err := GenerateRefreshToken(refreshClaims.UserID, true, refreshClaims.RoleId,refreshClaims.Role, refreshClaims.Permissions)
+			newRefresh, err := GenerateRefreshToken(refreshClaims.UserID, refreshClaims.RestaurantId)
 			if err != nil {
 				utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 					Status:  "error",
@@ -112,7 +106,6 @@ func AuthRestaurantRoleMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-		
 			utils.SetCookie(w, "restaurant_access_token", newAccess, 15*60)
 			utils.SetCookie(w, "restaurant_refresh_token", newRefresh, 7*24*3600)
 
