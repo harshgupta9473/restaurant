@@ -6,9 +6,11 @@ import (
 	"github.com/gorilla/mux"
 	restaurants "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/Registration"
 	details "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/RestaurantDetails"
+	roles "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/Roles"
 	restaurantsAuth "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/restaurantAuth"
 	admin "github.com/harshgupta9473/restaurantmanagement/handlers/superAdmin"
 	"github.com/harshgupta9473/restaurantmanagement/handlers/userAuth"
+	middlewaresHelper "github.com/harshgupta9473/restaurantmanagement/helpers/middleware"
 	"github.com/harshgupta9473/restaurantmanagement/middlewares"
 )
 
@@ -62,6 +64,24 @@ func SetupRoutes() mux.Router {
 
 	    // owner and admin
 	    detailsRouter.Handle("/about/{id}",middlewares.AuthMiddleware(middlewares.IsAllowedRolesForAboutRestaurantDetail(http.HandlerFunc(details.GetRestaurantsPrivateDetails))))
+
+
+	
+	// role request
+	 
+	rolesRouter:=router.PathPrefix("/restaurant/roles").Subrouter();
+	    
+	     // role requesting  by normal user
+		 rolesRouter.Handle("/request/new",middlewares.AuthMiddleware(middlewares.IsVerified(http.HandlerFunc(roles.RequestRole)))).Methods("POST")
+		 rolesRouter.Handle("/manage/approve/{roleID}/{staffID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
+		 rolesRouter.Handle("/manage/reject/{roleID}/{staffID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
+		 rolesRouter.Handle("/manage/block/{roleID}/{staffID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
+
+		 // get all requests of role_id
+		 rolesRouter.Handle("/manage/{roleID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
+
+		 // get all roles thats under authority
+
 
 
 

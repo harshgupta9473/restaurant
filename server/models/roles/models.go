@@ -2,10 +2,16 @@ package roleModels
 
 import "time"
 
-type NewRole struct {
+type NewRoleCreationRequestOwner struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
 	RestaurantId int64  `json:"restaurant_id"`
+	Level        int64  `json:"level"`
+}
+
+type NewRoleCreationRequestPower struct {
+	Name         string `json:"name"`
+	Description  string `json:"description"`
 	Level        int64  `json:"level"`
 }
 

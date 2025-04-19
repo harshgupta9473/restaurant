@@ -45,7 +45,7 @@ func CreateOTPTable() error {
 func CreateRestaurantReqTable() error {
 	query := `CREATE TABLE IF NOT EXISTS restaurantsreq (
 		id SERIAL PRIMARY KEY,
-		owner_id INTEGER NOT NULL UNIQUE,
+		owner_id INTEGER NOT NULL,
 		title VARCHAR(255) NOT NULL,
 		description TEXT,
 		street_address VARCHAR(255),

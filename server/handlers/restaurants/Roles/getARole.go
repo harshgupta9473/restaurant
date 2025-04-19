@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	rolesHelper "github.com/harshgupta9473/restaurantmanagement/helpers/restaurants/roles"
 	"github.com/harshgupta9473/restaurantmanagement/middlewares"
 	roleModels "github.com/harshgupta9473/restaurantmanagement/models/roles"
@@ -72,8 +73,10 @@ func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
 	actingUserID := user.UserID
 	restaurantId := user.RestaurantId
 
-	
-	roleID, err := strconv.ParseInt(r.URL.Query().Get("roleID"), 10, 64)
+	// Extract path variables
+	vars := mux.Vars(r)
+
+	roleID, err := strconv.ParseInt(vars["roleID"], 10, 64)
 	if err != nil {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
 			Status:  "error",
@@ -83,8 +86,7 @@ func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	staffId, err := strconv.ParseInt(r.URL.Query().Get("staffID"), 10, 64)
+	staffId, err := strconv.ParseInt(vars["staffID"], 10, 64)
 	if err != nil {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
 			Status:  "error",
@@ -94,8 +96,7 @@ func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-	result, err:=rolesHelper.ChangeStatusOfIsApprovedInStaffTable(1,actingUserID,staffId,restaurantId,roleID)
+	result, err := rolesHelper.ChangeStatusOfIsApprovedInStaffTable(1, actingUserID, staffId, restaurantId, roleID)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
@@ -104,6 +105,7 @@ func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		utils.WriteJson(w, http.StatusOK, utils.APIResponse{
@@ -118,7 +120,6 @@ func ApproveRoleRequest(w http.ResponseWriter, r *http.Request) {
 		Message: "Role request approved successfully",
 	})
 }
-
 
 // reject request   is_approved=-1
 func RejectRoleRequest(w http.ResponseWriter, r *http.Request) {
@@ -135,29 +136,35 @@ func RejectRoleRequest(w http.ResponseWriter, r *http.Request) {
 	actingUserID := user.UserID
 	restaurantId := user.RestaurantId
 
-	roleID, err := strconv.ParseInt(r.URL.Query().Get("roleID"), 10, 64)
+	// Use mux.Vars to get path variables
+	vars := mux.Vars(r)
+
+	roleID, err := strconv.ParseInt(vars["roleID"], 10, 64)
 	if err != nil {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
 			Status:  "error",
 			Message: "Invalid roleID",
-		})
-		return
-	}
-	staffId, err := strconv.ParseInt(r.URL.Query().Get("staffID"), 10, 64)
-	if err != nil {
-		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
-			Status:  "error",
-			Message: "Invalid staffID",
+			Error:   "INVALID_ROLE_ID",
 		})
 		return
 	}
 
-	
-	result, err:=rolesHelper.ChangeStatusOfIsApprovedInStaffTable(-1,actingUserID,staffId,restaurantId,roleID)
+	staffId, err := strconv.ParseInt(vars["staffID"], 10, 64)
+	if err != nil {
+		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
+			Status:  "error",
+			Message: "Invalid staffID",
+			Error:   "INVALID_STAFF_ID",
+		})
+		return
+	}
+
+	result, err := rolesHelper.ChangeStatusOfIsApprovedInStaffTable(-1, actingUserID, staffId, restaurantId, roleID)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
 			Message: "Rejection failed",
+			Error:   "REJECTION_FAILED",
 		})
 		return
 	}
@@ -177,7 +184,6 @@ func RejectRoleRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // block request  is_approved=-2
 func BlockStaffRequest(w http.ResponseWriter, r *http.Request) {
 	user, err := middlewares.GetRestaurantUserContext(r)
@@ -193,31 +199,35 @@ func BlockStaffRequest(w http.ResponseWriter, r *http.Request) {
 	actingUserID := user.UserID
 	restaurantId := user.RestaurantId
 
-	roleID, err := strconv.ParseInt(r.URL.Query().Get("roleID"), 10, 64)
+	// Use path variables
+	vars := mux.Vars(r)
+
+	roleID, err := strconv.ParseInt(vars["roleID"], 10, 64)
 	if err != nil {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
 			Status:  "error",
 			Message: "Invalid roleID",
+			Error:   "INVALID_ROLE_ID",
 		})
 		return
 	}
 
-	staffId, err := strconv.ParseInt(r.URL.Query().Get("staffID"), 10, 64)
+	staffId, err := strconv.ParseInt(vars["staffID"], 10, 64)
 	if err != nil {
 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
 			Status:  "error",
 			Message: "Invalid staffID",
+			Error:   "INVALID_STAFF_ID",
 		})
 		return
 	}
 
-	
-
-		result, err:=rolesHelper.ChangeStatusOfIsApprovedInStaffTable(-2,actingUserID,staffId,restaurantId,roleID)
+	result, err := rolesHelper.ChangeStatusOfIsApprovedInStaffTable(-2, actingUserID, staffId, restaurantId, roleID)
 	if err != nil {
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 			Status:  "error",
 			Message: "Blocking failed",
+			Error:   "BLOCKING_FAILED",
 		})
 		return
 	}
@@ -238,12 +248,49 @@ func BlockStaffRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func GetAllRolesThatsUnderAuthority(w http.ResponseWriter,r *http.Request){
+func GetAllRolesThatsUnderAuthority(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// by  role id
-func GetAllRequestInRoleThatsUnderAuthority(w http.ResponseWriter,r *http.Request){
+// func GetAllRequestInRoleThatsUnderAuthority(w http.ResponseWriter, r *http.Request) {
+// 	user, err := middlewares.GetRestaurantUserContext(r)
+// 	if err != nil {
+// 		utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "Unauthorized access",
+// 			Error:   "USER_CONTEXT_MISSING",
+// 		})
+// 		return
+// 	}
 
-}
+// 	restaurantId := user.RestaurantId
+// 	vars := mux.Vars(r)
+
+// 	roleID, err := strconv.ParseInt(vars["roleID"], 10, 64)
+// 	if err != nil {
+// 		utils.WriteJson(w, http.StatusBadRequest, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "Invalid roleID",
+// 			Error:   "INVALID_ROLE_ID",
+// 		})
+// 		return
+// 	}
+
+// 	// Fetch all staff under this role with isApproved == 0 (i.e. pending)
+// 	staffRequests, err := rolesHelper.GetAllPendingRequestsForRole(restaurantId, roleID)
+// 	if err != nil {
+// 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
+// 			Status:  "error",
+// 			Message: "Could not fetch staff requests",
+// 			Error:   "FETCH_FAILED",
+// 		})
+// 		return
+// 	}
+
+// 	utils.WriteJson(w, http.StatusOK, utils.APIResponse{
+// 		Status:  "success",
+// 		Message: "Pending staff requests fetched successfully",
+// 		Data:    staffRequests,
+// 	})
+// }
 
