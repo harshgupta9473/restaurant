@@ -21,6 +21,7 @@ type Roles struct {
 	Code         string    `json:"-"`
 	Description  string    `json:"description"`
 	RestaurantId int64     `json:"restaurant_id"`
+	ManagerId    int64     `json:"manager_id"`
 	Level        int64     `json:"level"`
 	Is_Global    bool      `json:"is_global"`
 	Is_Custom    bool      `json:"is_custom"`

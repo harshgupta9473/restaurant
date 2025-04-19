@@ -12,9 +12,11 @@ func CreateRolesTable() error {
 	is_global BOOLEAN DEFAULT FALSE,
 	level INTEGER DEFAULT 0,
 	is_custom BOOLEAN DEFAULT TRUE,
+	manager_id INTEGER,  -- if null that means by restaurant owner
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
+	FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
 	UNIQUE(name,restaurant_id)
 	)`
 
@@ -70,7 +72,7 @@ func CreateStaffRoles() error {
     is_approved INTEGER DEFAULT 0,  -- 0 for that he is requested, -1 for rejected, 1 for accepted, -2 for blocked
     manager_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE(user_id, restaurant_id,role_id)
    )`
 	_, err := DB.Exec(query)

@@ -25,7 +25,7 @@ func CreateRolesByOwner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := rolesHelper.InsertIntoRoles(rolereq.Name, rolereq.Description, rolereq.RestaurantId, int(rolereq.Level))
+	id, err := rolesHelper.InsertIntoRoles(rolereq.Name, rolereq.Description, rolereq.RestaurantId, int(rolereq.Level),nil)
 	if err != nil {
 		log.Println("Error inserting role:", err)
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
@@ -72,7 +72,7 @@ func CreateRolesWhoHavePowerToCreate(w http.ResponseWriter, r *http.Request) {
 
 	}
 	restaurantId := user.RestaurantId
-	id, err := rolesHelper.InsertIntoRoles(rolereq.Name, rolereq.Description, restaurantId, int(rolereq.Level))
+	id, err := rolesHelper.InsertIntoRoles(rolereq.Name, rolereq.Description, restaurantId, int(rolereq.Level),&user.UserID)
 	if err != nil {
 		log.Println("Error inserting role:", err)
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{

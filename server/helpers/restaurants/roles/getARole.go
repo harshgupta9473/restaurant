@@ -48,7 +48,7 @@ func ChangeStatusOfIsApprovedInStaffTable(is_approved int, actingUserID int64, s
 func InsertIntoStaffTable(roleID, restaurantId, userId int64) error {
 	conn := db.GetDB()
 	query := `INSERT INTO staff_table(restaurant_id,user_id,role_id,is_approved)
-	VALUES ($1,$2,$3,$4)
+	VALUES ($1,$2,$3,$4,$5)
 	`
 	_, err := conn.Exec(query, restaurantId, userId, roleID)
 	return err
