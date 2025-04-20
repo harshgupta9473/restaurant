@@ -53,3 +53,104 @@ func InsertIntoStaffTable(roleID, restaurantId, userId int64) error {
 	_, err := conn.Exec(query, restaurantId, userId, roleID)
 	return err
 }
+
+func GetAllRolesThatsUnderAuthorityHelper(userID, restaurantId int64) ([]roleModels.Roles, error) {
+
+	query := `
+SELECT r.id, r.code, r.name, r.description, r.restaurant_id, r.is_global,r.level, 
+       r.is_custom, r.manager_id, r.created_at, r.updated_at
+FROM staff_roles as sr 
+JOIN role_target_permissions as rtp ON rtp.actor_role_id = sr.role_id
+JOIN roles as r ON r.id = rtp.target_role_id
+WHERE sr.user_id = $1
+  AND sr.restaurant_id = $2
+  AND sr.is_approved = 1
+`
+
+	rows, err := db.GetDB().Query(query, userID, restaurantId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []roleModels.Roles
+
+	for rows.Next() {
+		var role roleModels.Roles
+		err := rows.Scan(
+			&role.ID,
+			&role.Code,
+			&role.Name,
+			&role.Description,
+			&role.RestaurantId,
+			&role.Is_Global,
+			&role.Level,
+			&role.Is_Custom,
+			&role.ManagerId,
+			&role.CreatedAt,
+			&role.UpdatedAt,
+		)
+		if err != nil {
+			return result, err
+		}
+		result = append(result, role)
+	}
+
+	if err := rows.Err(); err != nil {
+
+		return nil, err
+	}
+	return result, nil
+}
+
+
+func GetAllRequestInRoleThatsUnderAuthorityHelper(roleID, restaurantId int64) ([]roleModels.PersonWithRoles, error) {
+	query := `
+	SELECT sr.id, sr.user_id, sr.restaurant_id, sr.role_id, r.name, 
+	       u.first_name, u.middle_name, u.last_name, u.manager_id, u.blocked, 
+	       sr.created_at, sr.updated_at, sr.is_approved
+	FROM users AS u
+	JOIN staff_roles AS sr ON u.id = sr.user_id
+	JOIN roles AS r ON r.id = sr.role_id
+	WHERE sr.role_id = $1
+	  AND sr.is_approved = 0
+	  AND sr.restaurant_id = $2
+	`
+
+	rows, err := db.GetDB().Query(query, roleID, restaurantId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var result []roleModels.PersonWithRoles
+
+	for rows.Next() {
+		var person roleModels.PersonWithRoles
+		err := rows.Scan(
+			&person.StaffId,
+			&person.UserID,
+			&person.RestaurantId,
+			&person.RoleId,
+			&person.RoleName,
+			&person.FirstName,
+			&person.MiddleName,
+			&person.LastName,
+			&person.ManagerId,
+			&person.Blocked,
+			&person.CreatedAt,
+			&person.UpdatedAt,
+			&person.Is_Approved,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		result = append(result, person)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
+	return result, nil
+}

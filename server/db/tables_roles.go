@@ -72,6 +72,7 @@ func CreateStaffRoles() error {
     is_approved INTEGER DEFAULT 0,  -- 0 for that he is requested, -1 for rejected, 1 for accepted, -2 for blocked
     manager_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE(user_id, restaurant_id,role_id)
    )`

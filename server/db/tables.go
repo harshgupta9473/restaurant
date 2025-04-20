@@ -165,13 +165,13 @@ func CreateMenuCategoriesTable()error{
 	updated_at TIMESTAMP DEFAULT NOW(),
 	UNIQUE(restaurant_id,name)
 	)`;
-	_,err:=DB.Query(query)
+	_,err:=DB.Exec(query)
 	return err
 }
 
 func CreateMenuItemsTable()error{
 	query:=`CREATE TABLE IF NOT EXISTS menu_items(
-	id SERIAL PIMARY KEY,
+	id SERIAL PRIMARY KEY,
 	restaurant_id INTEGER NOT NULL,
 	category_id INTEGER,
 	name TEXT NOT NULL,

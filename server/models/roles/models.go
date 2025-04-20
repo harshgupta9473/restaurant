@@ -10,9 +10,9 @@ type NewRoleCreationRequestOwner struct {
 }
 
 type NewRoleCreationRequestPower struct {
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Level        int64  `json:"level"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Level       int64  `json:"level"`
 }
 
 type Roles struct {
@@ -33,4 +33,23 @@ type NewUserRequestForRole struct {
 	RestaurantID int64  `json:"restaurant_id"`
 	Code         string `json:"code"`
 	RoleId       int64  `json:"role_id"`
+}
+
+type StaffMember struct {
+	ID int64 `json:"id"`
+}
+type PersonWithRoles struct {
+	StaffId      int64     `json:"staff_id"`
+	UserID       int64     `json:"user_id"`
+	RestaurantId int64     `json:"restaurant_id"`
+	RoleId       int64     `json:"role_id"`
+	RoleName     string    `json:"role_name"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	MiddleName   string    `json:"middle_name"`
+	ManagerId    int64     `json:"manager_id"`
+	Blocked      bool      `json:"blocked"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Is_Approved  int       `json:"is_approved"` // 0 initital 1 approved -1 rejected -2 blocked
 }
