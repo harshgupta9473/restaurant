@@ -2,6 +2,12 @@ package roleModels
 
 import "time"
 
+type RestaurantRoleLogin struct {
+	Email        string `json:"email"`
+	RestaurantId int64  `json:"restaurant_id"`
+	Password     string `json:"password"`
+}
+
 type NewRoleCreationRequestOwner struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`

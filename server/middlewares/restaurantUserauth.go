@@ -17,7 +17,7 @@ type JWTRestaurantClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userID int64, restaurantId int64) (string, error) {
+func GenerateRestaurantAccessToken(userID int64, restaurantId int64) (string, error) {
 	claims := JWTRestaurantClaims{
 		UserID:       userID,
 		RestaurantId: restaurantId,
@@ -30,7 +30,7 @@ func GenerateAccessToken(userID int64, restaurantId int64) (string, error) {
 	return token.SignedString(utils.AccessRestaurantRoleJWTSecret)
 }
 
-func GenerateRefreshToken(userID int64, restaurantId int64) (string, error) {
+func GenerateRestaurantRefreshToken(userID int64, restaurantId int64) (string, error) {
 	claims := JWTRestaurantClaims{
 		UserID:       userID,
 		RestaurantId: restaurantId,
@@ -87,7 +87,7 @@ func AuthRestaurantRoleMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			newAccess, err := GenerateAccessToken(refreshClaims.UserID, refreshClaims.RestaurantId)
+			newAccess, err :=GenerateRestaurantAccessToken(refreshClaims.UserID, refreshClaims.RestaurantId)
 			if err != nil {
 				utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 					Status:  "error",
@@ -96,7 +96,7 @@ func AuthRestaurantRoleMiddleware(next http.Handler) http.Handler {
 				})
 				return
 			}
-			newRefresh, err := GenerateRefreshToken(refreshClaims.UserID, refreshClaims.RestaurantId)
+			newRefresh, err := GenerateRestaurantRefreshToken(refreshClaims.UserID, refreshClaims.RestaurantId)
 			if err != nil {
 				utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
 					Status:  "error",
