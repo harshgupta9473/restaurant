@@ -9,7 +9,7 @@ import (
 	roles "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/Roles"
 	restaurantsAuth "github.com/harshgupta9473/restaurantmanagement/handlers/restaurants/restaurantAuth"
 	admin "github.com/harshgupta9473/restaurantmanagement/handlers/superAdmin"
-	"github.com/harshgupta9473/restaurantmanagement/handlers/userAuth"
+   auth	"github.com/harshgupta9473/restaurantmanagement/handlers/userAuth"
 	middlewaresHelper "github.com/harshgupta9473/restaurantmanagement/helpers/middleware"
 	"github.com/harshgupta9473/restaurantmanagement/middlewares"
 )
@@ -25,24 +25,28 @@ func SetupRoutes() mux.Router {
 	   userAuth.Handle("/verify", middlewares.AuthMiddleware(http.HandlerFunc((auth.SendVerificationLink)))).Methods(http.MethodGet)
 
 	   // super admin login
-	   userAuth.HandleFunc("/auth/user/admin/login",admin.SuperAdminLogin)
+	  router.HandleFunc("/auth/admin/login",admin.SuperAdminLogin)
 
 	   // restaurant owner login
-       userAuth.HandleFunc("/restaurant/login",restaurantsAuth.RestaurantOwnerLogIN)
+       router.HandleFunc("/restaurant/owner/login",restaurantsAuth.RestaurantOwnerLogIN)
 
 
 
 
 	//resturant registration Request by User
 	register := router.PathPrefix("/restaurant/register").Subrouter()
-	register.Handle("/", middlewares.AuthMiddleware(http.HandlerFunc(restaurants.RestaurantAccountRequest))).Methods(http.MethodPost)
-
-
+	register.Handle("/", middlewares.AuthMiddleware(middlewares.IsVerified(http.HandlerFunc(restaurants.RestaurantAccountRequest)))).Methods(http.MethodPost)
+	
 
 
 
 
 	//SuperAdmin
+
+	// LogIN
+
+	router.HandleFunc("/admin/auth/login",admin.SuperAdminLogin)
+
 	// restaurantApproval request
 	adminRouter := router.PathPrefix("/admin/restaurants").Subrouter()
 	adminRouter.Handle("/",middlewares.AuthMiddleware(middlewares.IsSuperAdminMiddleware(http.HandlerFunc(admin.GetAllListOFRequest))))
@@ -53,7 +57,7 @@ func SetupRoutes() mux.Router {
 
 	
 
-	   
+	
 	// restaurant details
 
 	    //public
@@ -66,24 +70,41 @@ func SetupRoutes() mux.Router {
 	    detailsRouter.Handle("/about/{id}",middlewares.AuthMiddleware(middlewares.IsAllowedRolesForAboutRestaurantDetail(http.HandlerFunc(details.GetRestaurantsPrivateDetails))))
 
 
-	
-	// role request
+	// role
+
+	// role login 
 	 
 	rolesRouter:=router.PathPrefix("/restaurant/roles").Subrouter();
+
+	// role login 
+	rolesRouter.HandleFunc("/auth/login",roles.RoleLogin)
 	    
+	// role request
 	     // role requesting  by normal user
-		 rolesRouter.Handle("/request/new",middlewares.AuthMiddleware(middlewares.IsVerified(http.HandlerFunc(roles.RequestRole)))).Methods("POST")
+		 rolesRouter.Handle("/request/user",middlewares.AuthMiddleware(middlewares.IsVerified(http.HandlerFunc(roles.RequestRole)))).Methods("POST")
+
+		 // roles under different authority
+	     //manage
+		 // all roles under authority
+		 rolesRouter.Handle("/manage",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequirePermission("manage",middlewaresHelper.CheckPermissionFunc)(http.HandlerFunc(roles.GetAllRolesThatsUnderAuthority))))
+		 // get all requests of role_id
+		 rolesRouter.Handle("/manage/{roleID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.GetAllRequestInRoleThatsUnderAuthority))))
+
 		 rolesRouter.Handle("/manage/approve/{roleID}/{staffID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
 		 rolesRouter.Handle("/manage/reject/{roleID}/{staffID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
 		 rolesRouter.Handle("/manage/block/{roleID}/{staffID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
 
-		 // get all requests of role_id
-		 rolesRouter.Handle("/manage/{roleID}",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequireAuthority("manage",middlewaresHelper.AuthorityPermissionCheck)(http.HandlerFunc(roles.ApproveRoleRequest))))
+		 // create roles by restaurant owner
 
-		 // get all roles thats under authority
+		 router.Handle("/restaurant/owner/roles/create",middlewares.AuthMiddleware(middlewares.IsVerified(http.HandlerFunc(roles.CreateRolesByOwner))))
+
+		 // create roles by those who have power to create roles
+		 rolesRouter.Handle("/create/new",middlewares.AuthRestaurantRoleMiddleware(middlewares.RequirePermission("create_roles",middlewaresHelper.CheckPermissionFunc)(http.HandlerFunc(roles.CreateRolesWhoHavePowerToCreate))))
 
 
 
+
+		 //menu
 
 
 	   

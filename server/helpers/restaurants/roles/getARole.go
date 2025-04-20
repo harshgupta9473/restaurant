@@ -54,7 +54,7 @@ func InsertIntoStaffTable(roleID, restaurantId, userId int64) error {
 	return err
 }
 
-func GetAllRolesThatsUnderAuthorityHelper(userID, restaurantId int64) ([]roleModels.Roles, error) {
+func GetAllRolesThatsUnderAuthorityHelper(userID, restaurantId int64, permissionId int64) ([]roleModels.Roles, error) {
 
 	query := `
 SELECT r.id, r.code, r.name, r.description, r.restaurant_id, r.is_global,r.level, 
@@ -65,9 +65,10 @@ JOIN roles as r ON r.id = rtp.target_role_id
 WHERE sr.user_id = $1
   AND sr.restaurant_id = $2
   AND sr.is_approved = 1
+  AND rtp.action_permission_id=$3
 `
 
-	rows, err := db.GetDB().Query(query, userID, restaurantId)
+	rows, err := db.GetDB().Query(query, userID, restaurantId, permissionId)
 	if err != nil {
 		return nil, err
 	}
@@ -103,21 +104,32 @@ WHERE sr.user_id = $1
 	return result, nil
 }
 
+func GetAllStaffMemberOfRoleThatsUnderAuthorityHelper(
+	userID, roleID, restaurantId, permissionID int64,
+) ([]roleModels.PersonWithRoles, error) {
 
-func GetAllRequestInRoleThatsUnderAuthorityHelper(roleID, restaurantId int64) ([]roleModels.PersonWithRoles, error) {
 	query := `
 	SELECT sr.id, sr.user_id, sr.restaurant_id, sr.role_id, r.name, 
 	       u.first_name, u.middle_name, u.last_name, u.manager_id, u.blocked, 
 	       sr.created_at, sr.updated_at, sr.is_approved
 	FROM users AS u
 	JOIN staff_roles AS sr ON u.id = sr.user_id
-	JOIN roles AS r ON r.id = sr.role_id
+	JOIN roles AS r ON sr.role_id = r.id
+	JOIN role_target_permissions AS rtp ON rtp.target_role_id = sr.role_id
 	WHERE sr.role_id = $1
-	  AND sr.is_approved = 0
 	  AND sr.restaurant_id = $2
+	  AND rtp.action_permission_id = $3
+	  AND EXISTS (
+	      SELECT 1
+	      FROM staff_roles AS actor_sr
+	      WHERE actor_sr.user_id = $4
+	        AND actor_sr.restaurant_id = $2
+	        AND actor_sr.is_approved = TRUE
+	        AND actor_sr.role_id = rtp.actor_role_id
+	  )
 	`
 
-	rows, err := db.GetDB().Query(query, roleID, restaurantId)
+	rows, err := db.GetDB().Query(query, roleID, restaurantId, permissionID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}

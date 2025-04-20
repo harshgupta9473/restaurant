@@ -33,7 +33,10 @@ func RoleLogin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
+	if !user.Verified{
+		//
+		return
+	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		utils.WriteJson(w, http.StatusUnauthorized, utils.APIResponse{

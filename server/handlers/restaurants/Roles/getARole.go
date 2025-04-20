@@ -152,8 +152,12 @@ func GetAllRolesThatsUnderAuthority(w http.ResponseWriter, r *http.Request) {
 
 	restaurantId := user.RestaurantId
 	userID:=user.UserID
-
-	result,err:=rolesHelper.GetAllRolesThatsUnderAuthorityHelper(userID,restaurantId)
+	permissionId,err:=middlewares.GetPermissionIdFromContext(r)
+	if err!=nil{
+		//
+		return
+	}
+	result,err:=rolesHelper.GetAllRolesThatsUnderAuthorityHelper(userID,restaurantId,permissionId)
 
 if  err != nil {
 	utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{
@@ -195,8 +199,13 @@ func GetAllRequestInRoleThatsUnderAuthority(w http.ResponseWriter, r *http.Reque
 		})
 		return
 	}
+	permissionId,err:=middlewares.GetPermissionIdFromContext(r)
+	if err!=nil{
+		//
+		return
+	}
 
-	result,err:=rolesHelper.GetAllRequestInRoleThatsUnderAuthorityHelper(roleID,restaurantId)
+	result,err:=rolesHelper.GetAllStaffMemberOfRoleThatsUnderAuthorityHelper(user.UserID,roleID,restaurantId,permissionId)
 
 	if err!=nil{
 		utils.WriteJson(w, http.StatusInternalServerError, utils.APIResponse{

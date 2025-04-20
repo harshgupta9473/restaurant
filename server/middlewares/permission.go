@@ -1,16 +1,17 @@
 package middlewares
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/harshgupta9473/restaurantmanagement/utils"
 )
 
-
-// General Permissions like "view_inventory etc"
-func RequirePermission(permission string, checkPermissionFunc func(userID, restaurantID int64, permission string) error) func(http.Handler) http.Handler {
+// Just to check if  Permissions like "view_inventory etc and also some authority permission if they have"
+func RequirePermission(permission string, checkPermissionFunc func(userID, restaurantID int64, permission string) (int64,error)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			
@@ -26,7 +27,7 @@ func RequirePermission(permission string, checkPermissionFunc func(userID, resta
 			}
 
 			
-			err = checkPermissionFunc(user.UserID, user.RestaurantId, permission)
+			permissionId,err := checkPermissionFunc(user.UserID, user.RestaurantId, permission)
 			if err != nil {
 				
 				if err == sql.ErrNoRows {
@@ -47,14 +48,14 @@ func RequirePermission(permission string, checkPermissionFunc func(userID, resta
 				return
 			}
 
-			
-			next.ServeHTTP(w, r)
+			ctx:=context.WithValue(r.Context(),"permission_id",permissionId)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
 // RequireAuthority checks if the user has the required authority on a specific role.
-func RequireAuthority(permission string, AuthorityPermissionCheck func(userId, restaurantId int64, targetRoleId int64, permission string) error) func(http.Handler) http.Handler {
+func RequireAuthority(permission string, AuthorityPermissionCheck func(userId, restaurantId int64, targetRoleId int64, permission string) (int64,error)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			
@@ -81,7 +82,8 @@ func RequireAuthority(permission string, AuthorityPermissionCheck func(userId, r
 			}
 
 			
-			if err := AuthorityPermissionCheck(user.UserID, user.RestaurantId, roleID, permission); err != nil {
+			permissionId, err := AuthorityPermissionCheck(user.UserID, user.RestaurantId, roleID, permission);
+			if err != nil {
 				
 				if err == sql.ErrNoRows {
 					utils.WriteJson(w, http.StatusForbidden, utils.APIResponse{
@@ -101,7 +103,17 @@ func RequireAuthority(permission string, AuthorityPermissionCheck func(userId, r
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			ctx:=context.WithValue(r.Context(),"permission_id",permissionId)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+
+func GetPermissionIdFromContext(r *http.Request)(int64,error){
+	id,ok:=r.Context().Value("permission_id").(int64)
+	if !ok{
+		return 0,fmt.Errorf("failed to access permission id from context")
+	}
+	return id,nil
 }

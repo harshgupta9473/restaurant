@@ -13,11 +13,11 @@ import (
 // - and if that permission allows acting on the target role.
 // Returns true if permission exists, false with an error otherwise.
 
-func AuthorityPermissionCheck(userId, restaurantId int64, targetRoleId int64, permission string) (error) {
+func AuthorityPermissionCheck(userId, restaurantId int64, targetRoleId int64, permission string) (int64,error) {
 	conn := db.GetDB()
 
 	query := `
-	SELECT 1
+	SELECT p.id
 	FROM staff_roles AS sr
 	JOIN role_target_permissions AS rtp ON sr.role_id = rtp.actor_role_id
 	JOIN permissions AS p ON rtp.permission_id = p.id
@@ -29,13 +29,13 @@ func AuthorityPermissionCheck(userId, restaurantId int64, targetRoleId int64, pe
 	LIMIT 1;
 	`
 
-	var exists int
-	err := conn.QueryRow(query, userId, restaurantId, permission, targetRoleId).Scan(&exists)
+	var permissionID int64
+	err := conn.QueryRow(query, userId, restaurantId, permission, targetRoleId).Scan(&permissionID)
 	if err != nil {
-		 return err
+		 return 0, err
 	}
 
-	return nil
+	return permissionID, nil
 }
 
 
@@ -44,12 +44,12 @@ func AuthorityPermissionCheck(userId, restaurantId int64, targetRoleId int64, pe
 // CheckPermissionFunc checks if a user has a general permission in a restaurant,
 // without targeting a specific role.
 
-func CheckPermissionFunc(userID, restaurantID int64, permission string)(error){
+func CheckPermissionFunc(userID, restaurantID int64, permission string)(int64,error){
 
 	conn:=db.GetDB()
 
 	query:=`
-	SELECT 1 
+	SELECT p.id
 	FROM staff_roles as sr
 	JOIN role_permissions as rp ON rp.role_id=sr.role_id
 	JOIN permissions as p ON p.id=rp.permission_id
@@ -59,12 +59,12 @@ func CheckPermissionFunc(userID, restaurantID int64, permission string)(error){
 	AND p.name=$3
 	LIMIT 1;
 	`
-	var exists int
-	err:=conn.QueryRow(query,userID,restaurantID,permission).Scan(&exists)
+	var permissionID int64
+	err:=conn.QueryRow(query,userID,restaurantID,permission).Scan(&permissionID)
 
 	if err!=nil{
-		return err
+		return 0, err
 	}
 
-	return nil
+	return permissionID,nil
 }
